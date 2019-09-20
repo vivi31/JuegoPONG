@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextTooltip;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+
 class PantallaJuego implements Screen {
 
     private final Pong pong;
@@ -35,6 +36,15 @@ class PantallaJuego implements Screen {
     private Pelota pelota;
     private Raqueta raquetaComputdora;
     private Raqueta raquetaJugador;
+
+    //Marcador
+    private int puntosJugador = 0;
+    private int puntosMaquina = 0;
+    private Texto texto; //Muestra los calores en la pantalla
+
+    //Estado  del juegoo
+    private Estado estado = Estado.JUGANDO;
+
 
     public PantallaJuego(Pong pong) {
         this.pong = pong;
@@ -63,6 +73,9 @@ class PantallaJuego implements Screen {
         pelota = new Pelota(texturaCuadro,ANCHO/2,ALTO/2);
         raquetaComputdora = new Raqueta(texturaRaqueta, ANCHO-texturaRaqueta.getWidth(),ALTO/2);
         raquetaJugador = new Raqueta(texturaRaqueta, 0,ALTO/2);
+
+        //Objetos que dibuja texto
+        texto = new Texto();
     }
 
     private void cargarTexturass() {
@@ -75,6 +88,16 @@ class PantallaJuego implements Screen {
     public void render(float delta) {
         //Actualizar objetos de la pantalla
         actualizarObjetos();
+
+        if(estado == Estado.JUGANDO && pelota.sprite.getX()<0){
+            puntosMaquina++;
+            if(puntosMaquina>=5){
+                //Pierde el jugador
+                estado = Estado.PIERDE;
+            }
+            //Teinicie la partida
+            pelota.sprite.setPosition(ANCHO/2,ALTO/2);
+        }
         raquetaComputdora.seguirPelota(pelota);
 
         // borrar pantalla
@@ -100,12 +123,26 @@ class PantallaJuego implements Screen {
         //Dibujar la pelota dentro de batch
         pelota.dibujar(batch);
 
+
+        //Dibujar el marcador
+        texto.mostrarMensaje(batch, Integer.toString(puntosJugador), ANCHO/2-ANCHO/6, 3*ALTO/4);
+        texto.mostrarMensaje(batch,Integer.toString(puntosMaquina), ANCHO/2+ANCHO/6, 3*ALTO/4);
+
+        //Pierdemostrar mensaje
+        if(estado == Estado.PIERDE){
+            texto.mostrarMensaje(batch, "Lo siento, perdiste :(", ANCHO / 2 - ANCHO / 6, 3 * ALTO / 4);
+            texto.mostrarMensaje(batch, "Tap para continuar", ANCHO / 2 + ANCHO / 6, 3 * ALTO / 6);
+
+        }
+
         batch.end();
 
     }
 
     private void actualizarObjetos() {
-        pelota.mover(raquetaJugador);
+        if(estado == Estado.JUGANDO) {
+            pelota.mover(raquetaJugador);
+        }
     }
 
     @Override
@@ -155,7 +192,14 @@ class PantallaJuego implements Screen {
 
         @Override
         public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-            return false;
+            if(estado == Estado.PIERDE){
+                puntosJugador = 0;
+                puntosMaquina = 0;
+                pelota.sprite.setPosition(ANCHO/2,ALTO/2);
+                estado = Estado.JUGANDO;
+
+            }
+            return true;
         }
 
         @Override
